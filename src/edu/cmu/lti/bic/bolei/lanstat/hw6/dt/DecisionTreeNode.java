@@ -63,6 +63,13 @@ public class DecisionTreeNode {
 		noChild.createLanguageModel();
 	}
 
+	public float tryGrowDT(Question question) {
+		growDT(question);
+		float mutInfo = getMutalInformation();
+		rollBackGrow();
+		return mutInfo;
+	}
+
 	public static DecisionTreeNode initializeTree() throws IOException {
 		Properties prop = new Properties();
 		prop.load(new FileInputStream("resources/config.properties"));
@@ -171,6 +178,13 @@ public class DecisionTreeNode {
 	private void appendDataSetEntry(DataSetEntry entry) {
 		memDataSet.add(entry);
 		dataSetSize++;
+	}
+
+	private void rollBackGrow() {
+		memDataSet.addAll(yesChild.memDataSet);
+		memDataSet.addAll(noChild.memDataSet);
+		yesChild = null;
+		noChild = null;
 	}
 
 }
