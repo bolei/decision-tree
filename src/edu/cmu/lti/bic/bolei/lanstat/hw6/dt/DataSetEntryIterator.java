@@ -11,21 +11,15 @@ import java.util.List;
 public class DataSetEntryIterator implements Iterator<DataSetEntry> {
 
 	private static int HISTORY_SIZE;
-	static {
-		try {
-			HISTORY_SIZE = Integer.parseInt(DtUtil.getConfiguration()
-					.getProperty("historySize"));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 
 	private BufferedReader brIn;
 	private List<String> buff = new LinkedList<String>();
 	private List<String> history = new LinkedList<String>();
 	private String tag;
 
-	public DataSetEntryIterator(String corpusFilePath) throws IOException {
+	public DataSetEntryIterator(String corpusFilePath, int historySize)
+			throws IOException {
+		HISTORY_SIZE = historySize;
 		brIn = new BufferedReader(new FileReader(corpusFilePath));
 		loadBuffer();
 	}

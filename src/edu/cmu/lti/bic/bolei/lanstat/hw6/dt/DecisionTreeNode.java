@@ -74,10 +74,13 @@ public class DecisionTreeNode {
 		Properties prop = DtUtil.getConfiguration();
 		String corpusFilePath = prop.getProperty("corpusFilePath");
 		String dataSetFolder = prop.getProperty("dataSetFolder");
+		int historySize = Integer.parseInt(DtUtil.getConfiguration()
+				.getProperty("historySize"));
 
 		DecisionTreeNode dtNode = new DecisionTreeNode(dataSetFolder);
 
-		DataSetEntryIterator it = new DataSetEntryIterator(corpusFilePath);
+		DataSetEntryIterator it = new DataSetEntryIterator(corpusFilePath,
+				historySize);
 		dtNode.appendDataSetEntryBatch(it, true);
 		dtNode.createLanguageModel();
 		return dtNode;
@@ -131,6 +134,10 @@ public class DecisionTreeNode {
 
 	public double calcPerplexity(DataSetEntryIterator it) {
 		double avgLogLik = calcAverageLogLikelihood(it);
+		return Math.pow(2, avgLogLik * (-1));
+	}
+
+	public double calcPerplexity(double avgLogLik) {
 		return Math.pow(2, avgLogLik * (-1));
 	}
 
