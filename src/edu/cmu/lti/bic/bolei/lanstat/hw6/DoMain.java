@@ -8,9 +8,8 @@ import edu.cmu.lti.bic.bolei.lanstat.hw6.question.VerbQuestion;
 public class DoMain {
 	public static void main(String[] args) throws IOException {
 		DecisionTreeNode root = DecisionTreeNode.initializeTree();
-		float mutualInfo = root.tryGrowDT(new VerbQuestion());
+		double mutualInfo = root.tryGrowDT(new VerbQuestion());
 		System.out.println("root mutual info: " + mutualInfo);
-		root.dumpDataSet();
 	}
 
 }

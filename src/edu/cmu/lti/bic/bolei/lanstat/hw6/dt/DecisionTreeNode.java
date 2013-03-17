@@ -2,7 +2,6 @@ package edu.cmu.lti.bic.bolei.lanstat.hw6.dt;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
@@ -15,13 +14,13 @@ import java.util.UUID;
 import edu.cmu.lti.bic.bolei.lanstat.hw6.question.Question;
 
 public class DecisionTreeNode {
-	public static final int HISTORY_SIZE = 20;
 	private String outFolder;
+	private Question question;
 
 	/**
 	 * Language model created from dataset file
 	 */
-	private HashMap<String, Float> langModel;
+	private HashMap<String, Double> langModel;
 	/**
 	 * (h, t) pairs
 	 */
@@ -59,20 +58,20 @@ public class DecisionTreeNode {
 				noChild.appendDataSetEntry(entry);
 			}
 		}
+		this.question = question;
 		yesChild.createLanguageModel();
 		noChild.createLanguageModel();
 	}
 
-	public float tryGrowDT(Question question) {
+	public double tryGrowDT(Question question) {
 		growDT(question);
-		float mutInfo = getMutalInformation();
+		double mutInfo = getMutalInformation();
 		rollBackGrow();
 		return mutInfo;
 	}
 
 	public static DecisionTreeNode initializeTree() throws IOException {
-		Properties prop = new Properties();
-		prop.load(new FileInputStream("resources/config.properties"));
+		Properties prop = DtUtil.getConfiguration();
 		String corpusFilePath = prop.getProperty("corpusFilePath");
 		String dataSetFolder = prop.getProperty("dataSetFolder");
 
@@ -84,18 +83,18 @@ public class DecisionTreeNode {
 		return dtNode;
 	}
 
-	public float getNodeEntropy() {
-		float entropy = 0f;
-		for (Entry<String, Float> entry : langModel.entrySet()) {
-			entropy += entry.getValue()
-					* (Math.log(1 / entry.getValue()) / Math.log(2));
+	public double getNodeEntropy() {
+		double entropy = 0f;
+		for (Entry<String, Double> entry : langModel.entrySet()) {
+			entropy += entry.getValue() * logBase2(1 / entry.getValue());
 		}
 		return entropy;
 	}
 
-	public float getMutalInformation() {
-		float yesProb = ((float) yesChild.dataSetSize) / ((float) dataSetSize);
-		float noProb = ((float) noChild.dataSetSize) / ((float) dataSetSize);
+	public double getMutalInformation() {
+		double yesProb = ((double) yesChild.dataSetSize)
+				/ ((double) dataSetSize);
+		double noProb = ((double) noChild.dataSetSize) / ((double) dataSetSize);
 		return getNodeEntropy() - yesProb * yesChild.getNodeEntropy() - noProb
 				* noChild.getNodeEntropy();
 	}
@@ -107,6 +106,32 @@ public class DecisionTreeNode {
 		}
 		Iterator<DataSetEntry> it = memDataSet.iterator();
 		appendDataSetEntryBatch(it, false);
+	}
+
+	public double getProbability(DataSetEntry entry) {
+		if (yesChild == null || noChild == null || question == null) {
+			return langModel.get(entry.getToken());
+		}
+		if (question.giveAnswer(entry) == true) {
+			return yesChild.getProbability(entry);
+		} else {
+			return noChild.getProbability(entry);
+		}
+	}
+
+	public double calcAverageLogLikelihood(DataSetEntryIterator it) {
+		double avgLogLik = 0f;
+		int count = 0;
+		while (it.hasNext()) {
+			avgLogLik += logBase2(getProbability(it.next()));
+			count += 1;
+		}
+		return avgLogLik / count;
+	}
+
+	public double calcPerplexity(DataSetEntryIterator it) {
+		double avgLogLik = calcAverageLogLikelihood(it);
+		return Math.pow(2, avgLogLik * (-1));
 	}
 
 	/*
@@ -131,21 +156,25 @@ public class DecisionTreeNode {
 		return sb.toString();
 	}
 
+	private double logBase2(double val) {
+		return Math.log(val) / Math.log(2);
+	}
+
 	private String getLanguageModelString() {
 		StringBuilder sb = new StringBuilder();
-		for (Entry<String, Float> entry : langModel.entrySet()) {
+		for (Entry<String, Double> entry : langModel.entrySet()) {
 			sb.append(entry.getKey() + "\t" + entry.getValue() + "\n");
 		}
 		return sb.toString();
 	}
 
 	private void createLanguageModel() {
-		langModel = new HashMap<String, Float>();
+		langModel = new HashMap<String, Double>();
 		for (DataSetEntry entry : memDataSet) {
 			addTokenToLanguageModel(entry.getToken());
 		}
-		for (Entry<String, Float> entry : langModel.entrySet()) {
-			entry.setValue(entry.getValue() / ((float) dataSetSize));
+		for (Entry<String, Double> entry : langModel.entrySet()) {
+			entry.setValue(entry.getValue() / ((double) dataSetSize));
 		}
 	}
 
@@ -153,7 +182,7 @@ public class DecisionTreeNode {
 		if (langModel.containsKey(tok)) {
 			langModel.put(tok, langModel.get(tok) + 1);
 		} else {
-			langModel.put(tok, 1f);
+			langModel.put(tok, 1d);
 		}
 	}
 
@@ -185,6 +214,7 @@ public class DecisionTreeNode {
 		memDataSet.addAll(noChild.memDataSet);
 		yesChild = null;
 		noChild = null;
+		question = null;
 	}
 
 }

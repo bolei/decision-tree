@@ -10,6 +10,16 @@ import java.util.List;
 
 public class DataSetEntryIterator implements Iterator<DataSetEntry> {
 
+	private static int HISTORY_SIZE;
+	static {
+		try {
+			HISTORY_SIZE = Integer.parseInt(DtUtil.getConfiguration()
+					.getProperty("historySize"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	private BufferedReader brIn;
 	private List<String> buff = new LinkedList<String>();
 	private List<String> history = new LinkedList<String>();
@@ -31,7 +41,7 @@ public class DataSetEntryIterator implements Iterator<DataSetEntry> {
 	@Override
 	public DataSetEntry next() {
 		String tok = buff.remove(0);
-		while (history.size() >= DecisionTreeNode.HISTORY_SIZE) {
+		while (history.size() >= HISTORY_SIZE) {
 			history.remove(0);
 		}
 		if (tag != null) {
