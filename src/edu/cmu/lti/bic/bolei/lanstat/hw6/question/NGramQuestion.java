@@ -15,6 +15,9 @@ public class NGramQuestion implements Question {
 	@Override
 	public boolean giveAnswer(DataSetEntry entry) {
 		int histLen = entry.getHistory().size();
+		if (histLen < target.length) {
+			return false;
+		}
 		for (int i = 0; i < target.length; i++) {
 			if (!target[target.length - 1 - i]
 					.trim()
@@ -30,6 +33,26 @@ public class NGramQuestion implements Question {
 	@Override
 	public String toString() {
 		return "is NGram history: " + Arrays.toString(target);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof NGramQuestion)) {
+			return false;
+		}
+		NGramQuestion q = (NGramQuestion) obj;
+		boolean eqs = Arrays.equals(this.target, q.target);
+
+		return eqs;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 0;
+		for (String str : target) {
+			hash = hash * 37 + str.hashCode();
+		}
+		return hash;
 	}
 
 }

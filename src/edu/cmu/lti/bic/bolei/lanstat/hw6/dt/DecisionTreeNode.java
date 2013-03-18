@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -15,7 +16,9 @@ import java.util.UUID;
 import edu.cmu.lti.bic.bolei.lanstat.hw6.DtUtil;
 import edu.cmu.lti.bic.bolei.lanstat.hw6.question.Question;
 
-public class DecisionTreeNode {
+public class DecisionTreeNode implements Serializable {
+	private static final long serialVersionUID = -5810294510905722810L;
+
 	private String outFolder;
 	private Question question;
 
@@ -144,8 +147,8 @@ public class DecisionTreeNode {
 		return dtNode;
 	}
 
-	public static DecisionTreeNode growDT(List<Question> questions, int maxLevel)
-			throws IOException {
+	public static DecisionTreeNode growDT(List<? extends Question> questions,
+			int maxLevel) throws IOException {
 		if (maxLevel > questions.size() + 1) {
 			System.out.println("maxLevel is larger than allowed ("
 					+ (questions.size() + 1) + ")");
@@ -160,7 +163,7 @@ public class DecisionTreeNode {
 	}
 
 	private static void growDTNode(DecisionTreeNode node,
-			List<Question> questions, int levelCount, int maxLevel) {
+			List<? extends Question> questions, int levelCount, int maxLevel) {
 		if (levelCount >= maxLevel) {
 			return;
 		}
@@ -170,7 +173,10 @@ public class DecisionTreeNode {
 		}
 		Question bestQuestion = null;
 		double bestScore = 0, tempScore = 0;
+		int count = 0;
+		System.out.println("question size: " + questions.size());
 		for (Question q : questions) {
+			System.out.println("count=" + count++);
 			tempScore = node.tryGrowDT(q);
 			if (tempScore > bestScore) {
 				bestScore = tempScore;
@@ -211,10 +217,15 @@ public class DecisionTreeNode {
 	}
 
 	private double tryGrowDT(Question question) {
-		growDT(question);
-		double mutInfo = getMutalInformation();
-		rollBackGrow();
-		return mutInfo;
+		if (growDT(question) == true) {
+			double mutInfo = getMutalInformation();
+			rollBackGrow();
+			return mutInfo;
+		} else {
+			// grow failed, already rolled back
+			return 0;
+		}
+
 	}
 
 	private double logBase2(double val) {

@@ -2,13 +2,15 @@ package edu.cmu.lti.bic.bolei.lanstat.hw6;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
+import edu.cmu.lti.bic.bolei.lanstat.hw6.dt.DataSetEntry;
+import edu.cmu.lti.bic.bolei.lanstat.hw6.dt.DataSetEntryIterator;
 import edu.cmu.lti.bic.bolei.lanstat.hw6.question.NGramQuestion;
-import edu.cmu.lti.bic.bolei.lanstat.hw6.question.Question;
 
 public class DtUtil {
 
@@ -30,32 +32,22 @@ public class DtUtil {
 		return prop;
 	}
 
-	public static List<Question> generateNGramQuestions(int n)
+	public static Set<NGramQuestion> generateNGramQuestions(int n)
 			throws IOException {
-		List<Question> questions = new LinkedList<Question>();
-		String[] tokens = getConfiguration().getProperty("tokens").split("#");
-		int[] counter = new int[n];
-		Arrays.fill(counter, 0);
-		int scale = tokens.length;
-		for (int i = 0; i < Math.pow(scale, n); i++) {
-			counter = counterPlusOne(counter, scale);
-			String[] ngramHistory = new String[n];
-			for (int j = 0; j < n; j++) {
-				ngramHistory[j] = tokens[counter[j]];
+		Set<NGramQuestion> questions = new HashSet<NGramQuestion>();
+		String corpusFilePath = getConfiguration()
+				.getProperty("corpusFilePath");
+		DataSetEntryIterator it = new DataSetEntryIterator(corpusFilePath, n);
+		DataSetEntry entry;
+		while (it.hasNext()) {
+			entry = it.next();
+			if (entry.getHistory().size() < n) {
+				continue;
 			}
-			questions.add(new NGramQuestion(ngramHistory));
+			questions.add(new NGramQuestion(entry.getHistory().toArray(
+					new String[] {})));
 		}
 		return questions;
 	}
 
-	private static int[] counterPlusOne(int[] counter, int scale) {
-		int len = counter.length;
-		int i = len - 1;
-		counter[i] = (counter[i] + 1) % scale;
-		while (counter[i] == 0 && i > 0) {
-			i--;
-			counter[i] = (counter[i] + 1) % scale;
-		}
-		return counter;
-	}
 }
