@@ -8,6 +8,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.cmu.lti.bic.bolei.lanstat.hw6.DtUtil;
+
 public class DataSetEntryIterator implements Iterator<DataSetEntry> {
 
 	private static int HISTORY_SIZE;

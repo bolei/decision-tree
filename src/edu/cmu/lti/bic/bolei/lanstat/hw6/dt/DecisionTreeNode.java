@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
 
+import edu.cmu.lti.bic.bolei.lanstat.hw6.DtUtil;
 import edu.cmu.lti.bic.bolei.lanstat.hw6.question.Question;
 
 public class DecisionTreeNode {
