@@ -1,22 +1,21 @@
 package edu.cmu.lti.bic.bolei.lanstat.hw6.question;
 
-import edu.cmu.lti.bic.bolei.lanstat.hw6.dt.DataSetEntry;
-
 /**
  * Is verb in the history?
  * 
  * @author bolei
  * 
  */
-public class VerbQuestion implements Question {
+public class VerbQuestion extends HistoryContainsQuestion {
 
 	@Override
-	public boolean giveAnswer(final DataSetEntry entry) {
-		for (String his : entry.getHistory()) {
-			if (his.startsWith("VB")) {
-				return true;
-			}
-		}
-		return false;
+	protected boolean isTargetType(String oneHistory) {
+		return oneHistory.startsWith("VB") ? true : false;
 	}
+
+	@Override
+	protected String questionTarget() {
+		return "verb";
+	}
+
 }

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
@@ -44,46 +45,6 @@ public class DecisionTreeNode {
 
 	public DecisionTreeNode getNoChild() {
 		return noChild;
-	}
-
-	public void growDT(Question question) {
-		yesChild = new DecisionTreeNode(outFolder);
-		noChild = new DecisionTreeNode(outFolder);
-		DataSetEntry entry;
-		while (!memDataSet.isEmpty()) {
-			entry = memDataSet.removeFirst();
-			if (question.giveAnswer(entry) == true) {// yes
-				yesChild.appendDataSetEntry(entry);
-			} else {// no
-				noChild.appendDataSetEntry(entry);
-			}
-		}
-		this.question = question;
-		yesChild.createLanguageModel();
-		noChild.createLanguageModel();
-	}
-
-	public double tryGrowDT(Question question) {
-		growDT(question);
-		double mutInfo = getMutalInformation();
-		rollBackGrow();
-		return mutInfo;
-	}
-
-	public static DecisionTreeNode initializeTree() throws IOException {
-		Properties prop = DtUtil.getConfiguration();
-		String corpusFilePath = prop.getProperty("corpusFilePath");
-		String dataSetFolder = prop.getProperty("dataSetFolder");
-		int historySize = Integer.parseInt(DtUtil.getConfiguration()
-				.getProperty("historySize"));
-
-		DecisionTreeNode dtNode = new DecisionTreeNode(dataSetFolder);
-
-		DataSetEntryIterator it = new DataSetEntryIterator(corpusFilePath,
-				historySize);
-		dtNode.appendDataSetEntryBatch(it, true);
-		dtNode.createLanguageModel();
-		return dtNode;
 	}
 
 	public double getNodeEntropy() {
@@ -148,6 +109,9 @@ public class DecisionTreeNode {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("node id = " + id + "\n");
+		if (question != null) {
+			sb.append("node question: " + question.toString() + "\n");
+		}
 		sb.append("lang model:" + "\n");
 		sb.append(getLanguageModelString());
 		sb.append("root entropy = " + getNodeEntropy() + "\n");
@@ -161,6 +125,95 @@ public class DecisionTreeNode {
 			sb.append(noChild.toString());
 		}
 		return sb.toString();
+	}
+
+	public static DecisionTreeNode initializeTree() throws IOException {
+		Properties prop = DtUtil.getConfiguration();
+		String corpusFilePath = prop.getProperty("corpusFilePath");
+		String dataSetFolder = prop.getProperty("dataSetFolder");
+		int historySize = Integer.parseInt(DtUtil.getConfiguration()
+				.getProperty("historySize"));
+
+		DecisionTreeNode dtNode = new DecisionTreeNode(dataSetFolder);
+
+		DataSetEntryIterator it = new DataSetEntryIterator(corpusFilePath,
+				historySize);
+		dtNode.appendDataSetEntryBatch(it, true);
+		dtNode.createLanguageModel();
+		return dtNode;
+	}
+
+	public static DecisionTreeNode growDT(List<Question> questions, int maxLevel)
+			throws IOException {
+		if (maxLevel > questions.size() + 1) {
+			System.out.println("maxLevel is larger than allowed ("
+					+ (questions.size() + 1) + ")");
+			return null;
+		}
+		DecisionTreeNode root = initializeTree();
+		int levelCount = 1;
+
+		// find best question, grow the node
+		growDTNode(root, questions, levelCount, maxLevel);
+		return root;
+	}
+
+	private static void growDTNode(DecisionTreeNode node,
+			List<Question> questions, int levelCount, int maxLevel) {
+		if (levelCount >= maxLevel) {
+			return;
+		}
+		if (questions == null || questions.isEmpty()) {
+			throw new NullPointerException(
+					"question list is empty or null at level " + levelCount);
+		}
+		Question bestQuestion = null;
+		double bestScore = 0, tempScore = 0;
+		for (Question q : questions) {
+			tempScore = node.tryGrowDT(q);
+			if (tempScore > bestScore) {
+				bestScore = tempScore;
+				bestQuestion = q;
+			}
+		}
+		boolean growRst = node.growDT(bestQuestion);
+		if (growRst == false) { // grow not successful
+			return;
+		}
+		questions.remove(bestQuestion);
+		growDTNode(node.yesChild, new LinkedList<Question>(questions),
+				levelCount + 1, maxLevel);
+		growDTNode(node.noChild, new LinkedList<Question>(questions),
+				levelCount + 1, maxLevel);
+	}
+
+	private boolean growDT(Question question) {
+		yesChild = new DecisionTreeNode(outFolder);
+		noChild = new DecisionTreeNode(outFolder);
+		DataSetEntry entry;
+		while (!memDataSet.isEmpty()) {
+			entry = memDataSet.removeFirst();
+			if (question.giveAnswer(entry) == true) {// yes
+				yesChild.appendDataSetEntry(entry);
+			} else {// no
+				noChild.appendDataSetEntry(entry);
+			}
+		}
+		if (yesChild.memDataSet.size() == 0 || noChild.memDataSet.size() == 0) {
+			rollBackGrow();
+			return false;
+		}
+		this.question = question;
+		yesChild.createLanguageModel();
+		noChild.createLanguageModel();
+		return true;
+	}
+
+	private double tryGrowDT(Question question) {
+		growDT(question);
+		double mutInfo = getMutalInformation();
+		rollBackGrow();
+		return mutInfo;
 	}
 
 	private double logBase2(double val) {
