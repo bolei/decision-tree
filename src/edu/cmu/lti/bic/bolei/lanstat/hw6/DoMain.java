@@ -4,35 +4,33 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Properties;
-import java.util.Set;
 
 import edu.cmu.lti.bic.bolei.lanstat.hw6.dt.DataSetEntryIterator;
-import edu.cmu.lti.bic.bolei.lanstat.hw6.dt.DecisionTreeNode;
+import edu.cmu.lti.bic.bolei.lanstat.hw6.dt.DecisionTree;
 import edu.cmu.lti.bic.bolei.lanstat.hw6.question.NGramQuestion;
-import edu.cmu.lti.bic.bolei.lanstat.hw6.question.Question;
 
 public class DoMain {
 	public static void main(String[] args) throws IOException {
 
 		System.out.println("start: " + new Date());
-
-		int level = 2;
-
+		Properties prop = DtUtil.getConfiguration();
+		int level = Integer.parseInt(prop.getProperty("level"));
 		// DecisionTreeNode root = DecisionTreeNode.initializeTree();
-		Set<NGramQuestion> questions = DtUtil.generateNGramQuestions(1);
+		LinkedList<NGramQuestion> questions = new LinkedList<NGramQuestion>(
+				DtUtil.generateNGramQuestions(1));
 		questions.addAll(DtUtil.generateNGramQuestions(2));
-		DecisionTreeNode root = DecisionTreeNode.growDT(
-				new LinkedList<Question>(questions), level);
+		DecisionTree tree = new DecisionTree(questions);
+		tree.growDT(level);
 
 		// System.out.println(root.toString());
-		Properties prop = DtUtil.getConfiguration();
+
 		String filePath = prop.getProperty("corpusFilePath");
 		int historySize = Integer.parseInt(DtUtil.getConfiguration()
 				.getProperty("historySize"));
 		DataSetEntryIterator it = new DataSetEntryIterator(filePath,
 				historySize);
-		double aveLogLik = root.calcAverageLogLikelihood(it);
-		double perplexity = root.calcPerplexity(aveLogLik);
+		double aveLogLik = tree.calcAverageLogLikelihood(it);
+		double perplexity = tree.calcPerplexity(aveLogLik);
 		System.out.println("on training data");
 		System.out.println("level to grow: " + level);
 		System.out.println("Average log likelihood: " + aveLogLik);
@@ -52,7 +50,7 @@ public class DoMain {
 		// for (Question q : questions) {
 		// System.out.println(q);
 		// }
-		// System.out.println("end: " + new Date());
+		System.out.println("end: " + new Date());
 
 	}
 }

@@ -9,6 +9,7 @@ import edu.cmu.lti.bic.bolei.lanstat.hw6.DtUtil;
 public class DataSetEntry {
 	private List<String> history = new LinkedList<String>();
 	private String token;
+	private boolean[] answers;
 
 	private DataSetEntry() {
 	}
@@ -34,6 +35,31 @@ public class DataSetEntry {
 		entry.history = history;
 		entry.token = token;
 		return entry;
+	}
+
+	public void initAnswers(boolean[] answers) {
+		this.answers = answers;
+	}
+
+	public void setAnswer(int questionIndex, boolean answer) {
+		answers[questionIndex] = answer;
+	}
+
+	public boolean getAnswer(int questionIndex) {
+		return answers[questionIndex];
+	}
+
+	public boolean meetMask(int[] questionIds, boolean[] answers) {
+		if (questionIds == null || questionIds.length == 0 || answers == null
+				|| answers.length == 0) {
+			return true;
+		}
+		for (int i = 0; i < questionIds.length; i++) {
+			if (answers[questionIds[i]] != answers[i]) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override

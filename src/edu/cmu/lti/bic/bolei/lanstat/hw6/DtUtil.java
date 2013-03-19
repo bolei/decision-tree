@@ -50,4 +50,25 @@ public class DtUtil {
 		return questions;
 	}
 
+	public static double logBase2(double val) {
+		return Math.log(val) / Math.log(2);
+	}
+
+	public static boolean valInArray(int[] array, int value) {
+		for (int v : array) {
+			if (v == value) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean valInArray(boolean[] array, boolean value) {
+		for (boolean v : array) {
+			if (v == value) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

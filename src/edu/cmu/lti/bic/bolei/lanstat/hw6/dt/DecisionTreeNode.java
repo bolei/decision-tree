@@ -1,26 +1,18 @@
 package edu.cmu.lti.bic.bolei.lanstat.hw6.dt;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.UUID;
 
 import edu.cmu.lti.bic.bolei.lanstat.hw6.DtUtil;
-import edu.cmu.lti.bic.bolei.lanstat.hw6.question.Question;
 
-public class DecisionTreeNode implements Serializable {
-	private static final long serialVersionUID = -5810294510905722810L;
+public class DecisionTreeNode {
 
-	private String outFolder;
-	private Question question;
+	private int[] historyQuestionIds;
+	private boolean[] historyQuestionAnswers;
+	private int questionIndex;
 
 	/**
 	 * Language model created from dataset file
@@ -29,18 +21,28 @@ public class DecisionTreeNode implements Serializable {
 	/**
 	 * (h, t) pairs
 	 */
-	private LinkedList<DataSetEntry> memDataSet;
-	private File dataSetFile;
-	private long dataSetSize = 0;
+	private List<DataSetEntry> memDataSet;
 	private String id;
 	private DecisionTreeNode yesChild, noChild;
 
-	private DecisionTreeNode(String dataSetFolder) {
+	public DecisionTreeNode(List<DataSetEntry> dataset, int[] historyQids,
+			boolean[] historyAns) {
 		yesChild = null;
 		noChild = null;
 		id = UUID.randomUUID().toString();
-		outFolder = dataSetFolder;
-		memDataSet = new LinkedList<DataSetEntry>();
+		memDataSet = dataset;
+		id = UUID.randomUUID().toString();
+		historyQuestionIds = historyQids;
+		historyQuestionAnswers = historyAns;
+		questionIndex = -1;
+	}
+
+	public boolean[] getHistoryQuestionAnswers() {
+		return historyQuestionAnswers;
+	}
+
+	public int[] getHistoryQuestionIds() {
+		return historyQuestionIds;
 	}
 
 	public DecisionTreeNode getYesChild() {
@@ -54,56 +56,22 @@ public class DecisionTreeNode implements Serializable {
 	public double getNodeEntropy() {
 		double entropy = 0f;
 		for (Entry<String, Double> entry : langModel.entrySet()) {
-			entropy += entry.getValue() * logBase2(1 / entry.getValue());
+			entropy += entry.getValue() * DtUtil.logBase2(1 / entry.getValue());
 		}
 		return entropy;
 	}
 
 	public double getMutalInformation() {
-		double yesProb = ((double) yesChild.dataSetSize)
-				/ ((double) dataSetSize);
-		double noProb = ((double) noChild.dataSetSize) / ((double) dataSetSize);
+		int yesDataSize = yesChild.getDataSize();
+		int noDataSize = noChild.getDataSize();
+		double yesProb = ((double) yesDataSize) / (yesDataSize + noDataSize);
+		double noProb = ((double) noDataSize) / (yesDataSize + noDataSize);
 		return getNodeEntropy() - yesProb * yesChild.getNodeEntropy() - noProb
 				* noChild.getNodeEntropy();
 	}
 
-	public void dumpDataSet() throws IOException {
-		if (dataSetFile == null) {
-			dataSetFile = new File(outFolder + "/" + id);
-			dataSetFile.createNewFile();
-		}
-		Iterator<DataSetEntry> it = memDataSet.iterator();
-		appendDataSetEntryBatch(it, false);
-	}
-
-	public double getProbability(DataSetEntry entry) {
-		if (yesChild == null || noChild == null || question == null) {
-			return langModel.get(entry.getToken());
-		}
-		if (question.giveAnswer(entry) == true) {
-			return yesChild.getProbability(entry);
-		} else {
-			return noChild.getProbability(entry);
-		}
-	}
-
-	public double calcAverageLogLikelihood(DataSetEntryIterator it) {
-		double avgLogLik = 0f;
-		int count = 0;
-		while (it.hasNext()) {
-			avgLogLik += logBase2(getProbability(it.next()));
-			count += 1;
-		}
-		return avgLogLik / count;
-	}
-
-	public double calcPerplexity(DataSetEntryIterator it) {
-		double avgLogLik = calcAverageLogLikelihood(it);
-		return Math.pow(2, avgLogLik * (-1));
-	}
-
-	public double calcPerplexity(double avgLogLik) {
-		return Math.pow(2, avgLogLik * (-1));
+	public double getProbability(String token) {
+		return langModel.get(token);
 	}
 
 	/*
@@ -113,8 +81,8 @@ public class DecisionTreeNode implements Serializable {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("node id = " + id + "\n");
-		if (question != null) {
-			sb.append("node question: " + question.toString() + "\n");
+		if (questionIndex != -1) {
+			sb.append("node question Id: " + questionIndex + "\n");
 		}
 		sb.append("lang model:" + "\n");
 		sb.append(getLanguageModelString());
@@ -131,105 +99,83 @@ public class DecisionTreeNode implements Serializable {
 		return sb.toString();
 	}
 
-	public static DecisionTreeNode initializeTree() throws IOException {
-		Properties prop = DtUtil.getConfiguration();
-		String corpusFilePath = prop.getProperty("corpusFilePath");
-		String dataSetFolder = prop.getProperty("dataSetFolder");
-		int historySize = Integer.parseInt(DtUtil.getConfiguration()
-				.getProperty("historySize"));
+	void createLanguageModel() {
+		langModel = new HashMap<String, Double>();
 
-		DecisionTreeNode dtNode = new DecisionTreeNode(dataSetFolder);
-
-		DataSetEntryIterator it = new DataSetEntryIterator(corpusFilePath,
-				historySize);
-		dtNode.appendDataSetEntryBatch(it, true);
-		dtNode.createLanguageModel();
-		return dtNode;
-	}
-
-	public static DecisionTreeNode growDT(List<? extends Question> questions,
-			int maxLevel) throws IOException {
-		if (maxLevel > questions.size() + 1) {
-			System.out.println("maxLevel is larger than allowed ("
-					+ (questions.size() + 1) + ")");
-			return null;
-		}
-		DecisionTreeNode root = initializeTree();
-		int levelCount = 1;
-
-		// find best question, grow the node
-		growDTNode(root, questions, levelCount, maxLevel);
-		return root;
-	}
-
-	private static void growDTNode(DecisionTreeNode node,
-			List<? extends Question> questions, int levelCount, int maxLevel) {
-		if (levelCount >= maxLevel) {
-			return;
-		}
-		if (questions == null || questions.isEmpty()) {
-			throw new NullPointerException(
-					"question list is empty or null at level " + levelCount);
-		}
-		Question bestQuestion = null;
-		double bestScore = 0, tempScore = 0;
-		int count = 0;
-		System.out.println("question size: " + questions.size());
-		for (Question q : questions) {
-			System.out.println("count=" + count++);
-			tempScore = node.tryGrowDT(q);
-			if (tempScore > bestScore) {
-				bestScore = tempScore;
-				bestQuestion = q;
+		for (DataSetEntry entry : memDataSet) {
+			if (entry.meetMask(historyQuestionIds, historyQuestionAnswers)) {
+				addTokenToLanguageModel(entry.getToken());
 			}
 		}
-		boolean growRst = node.growDT(bestQuestion);
-		if (growRst == false) { // grow not successful
-			return;
+		for (Entry<String, Double> entry : langModel.entrySet()) {
+			entry.setValue(entry.getValue() / ((double) memDataSet.size()));
 		}
-		questions.remove(bestQuestion);
-		growDTNode(node.yesChild, new LinkedList<Question>(questions),
-				levelCount + 1, maxLevel);
-		growDTNode(node.noChild, new LinkedList<Question>(questions),
-				levelCount + 1, maxLevel);
 	}
 
-	private boolean growDT(Question question) {
-		yesChild = new DecisionTreeNode(outFolder);
-		noChild = new DecisionTreeNode(outFolder);
-		DataSetEntry entry;
-		while (!memDataSet.isEmpty()) {
-			entry = memDataSet.removeFirst();
-			if (question.giveAnswer(entry) == true) {// yes
-				yesChild.appendDataSetEntry(entry);
-			} else {// no
-				noChild.appendDataSetEntry(entry);
-			}
+	double getMutalInformationForQuestion(int questionsIndex) {
+		if (growDT(questionsIndex) == false) {
+			return 0;
 		}
-		if (yesChild.memDataSet.size() == 0 || noChild.memDataSet.size() == 0) {
+		return getMutalInformation();
+	}
+
+	boolean growDT(int questionsIndex) {
+		if (questionsIndex < 0) {
+			return false;
+		}
+		int[] childQuestionHistory = createQuestionHistoryForChild(questionsIndex);
+		boolean[] yesChildAnswersHistory = createAnswerHistoryForChild(true);
+		boolean[] noChildAnswersHistory = createAnswerHistoryForChild(false);
+
+		yesChild = new DecisionTreeNode(memDataSet, childQuestionHistory,
+				yesChildAnswersHistory);
+		noChild = new DecisionTreeNode(memDataSet, childQuestionHistory,
+				noChildAnswersHistory);
+		this.questionIndex = questionsIndex;
+		yesChild.createLanguageModel();
+		noChild.createLanguageModel();
+		if (yesChild.langModel.size() == 0 || noChild.langModel.size() == 0) {
 			rollBackGrow();
 			return false;
 		}
-		this.question = question;
-		yesChild.createLanguageModel();
-		noChild.createLanguageModel();
 		return true;
 	}
 
-	private double tryGrowDT(Question question) {
-		if (growDT(question) == true) {
-			double mutInfo = getMutalInformation();
-			rollBackGrow();
-			return mutInfo;
-		} else {
-			// grow failed, already rolled back
-			return 0;
-		}
-
+	int getQuestionIndex() {
+		return questionIndex;
 	}
 
-	private double logBase2(double val) {
-		return Math.log(val) / Math.log(2);
+	void setQuestionIndex(int index) {
+		questionIndex = index;
+	}
+
+	private int[] createQuestionHistoryForChild(int questionIndex) {
+		int[] childQuestionHistory = Arrays.copyOf(historyQuestionIds,
+				historyQuestionIds.length + 1);
+		childQuestionHistory[historyQuestionIds.length] = questionIndex;
+		return childQuestionHistory;
+	}
+
+	private boolean[] createAnswerHistoryForChild(boolean childAnswer) {
+		boolean[] answerHistory = Arrays.copyOf(historyQuestionAnswers,
+				historyQuestionAnswers.length + 1);
+		answerHistory[historyQuestionAnswers.length] = childAnswer;
+		return answerHistory;
+	}
+
+	private int getDataSize() {
+		if (historyQuestionAnswers == null
+				|| historyQuestionAnswers.length == 0
+				|| historyQuestionIds == null || historyQuestionIds.length == 0) {
+			return memDataSet.size();
+		}
+		int size = 0;
+		for (DataSetEntry entry : memDataSet) {
+			if (entry.meetMask(historyQuestionIds, historyQuestionAnswers)) {
+				size++;
+			}
+		}
+		return size;
 	}
 
 	private String getLanguageModelString() {
@@ -240,16 +186,6 @@ public class DecisionTreeNode implements Serializable {
 		return sb.toString();
 	}
 
-	private void createLanguageModel() {
-		langModel = new HashMap<String, Double>();
-		for (DataSetEntry entry : memDataSet) {
-			addTokenToLanguageModel(entry.getToken());
-		}
-		for (Entry<String, Double> entry : langModel.entrySet()) {
-			entry.setValue(entry.getValue() / ((double) dataSetSize));
-		}
-	}
-
 	private void addTokenToLanguageModel(String tok) {
 		if (langModel.containsKey(tok)) {
 			langModel.put(tok, langModel.get(tok) + 1);
@@ -258,35 +194,10 @@ public class DecisionTreeNode implements Serializable {
 		}
 	}
 
-	private void appendDataSetEntryBatch(Iterator<DataSetEntry> it,
-			boolean inMemory) throws IOException {
-		if (inMemory == false) {
-			BufferedWriter brOut = new BufferedWriter(new FileWriter(
-					dataSetFile));
-			while (it.hasNext()) {
-				brOut.write(it.next().toString() + "\n");
-				dataSetSize++;
-			}
-			brOut.close();
-		} else {
-			while (it.hasNext()) {
-				memDataSet.add(it.next());
-			}
-			dataSetSize = memDataSet.size();
-		}
-	}
-
-	private void appendDataSetEntry(DataSetEntry entry) {
-		memDataSet.add(entry);
-		dataSetSize++;
-	}
-
 	private void rollBackGrow() {
-		memDataSet.addAll(yesChild.memDataSet);
-		memDataSet.addAll(noChild.memDataSet);
 		yesChild = null;
 		noChild = null;
-		question = null;
+		questionIndex = -1;
 	}
 
 }
