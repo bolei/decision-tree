@@ -1,7 +1,10 @@
 package edu.cmu.lti.bic.bolei.lanstat.hw6;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,15 +40,15 @@ public class DtUtil {
 		Set<NGramQuestion> questions = new HashSet<NGramQuestion>();
 		String corpusFilePath = getConfiguration()
 				.getProperty("corpusFilePath");
-		DataSetEntryIterator it = new DataSetEntryIterator(corpusFilePath, n);
+		List<String> trainingData = getCorpusData(corpusFilePath);
+		DataSetEntryIterator it = new DataSetEntryIterator(trainingData, n);
 		DataSetEntry entry;
 		while (it.hasNext()) {
 			entry = it.next();
-			if (entry.getHistory().size() < n) {
+			if (entry.getHistoryLength() < n) {
 				continue;
 			}
-			questions.add(new NGramQuestion(entry.getHistory().toArray(
-					new String[] {})));
+			questions.add(new NGramQuestion(entry.getHistory()));
 		}
 		return questions;
 	}
@@ -70,5 +73,17 @@ public class DtUtil {
 			}
 		}
 		return false;
+	}
+
+	public static LinkedList<String> getCorpusData(String corpusFilePath)
+			throws IOException {
+		LinkedList<String> trainingData = new LinkedList<String>();
+		BufferedReader brIn = new BufferedReader(new FileReader(corpusFilePath));
+
+		String line;
+		while ((line = brIn.readLine()) != null) {
+			Collections.addAll(trainingData, line.split("\\s+"));
+		}
+		return trainingData;
 	}
 }

@@ -14,7 +14,7 @@ public class NGramQuestion implements Question {
 
 	@Override
 	public boolean giveAnswer(DataSetEntry entry) {
-		int histLen = entry.getHistory().size();
+		int histLen = entry.getHistoryLength();
 		if (histLen < target.length) {
 			return false;
 		}
@@ -22,7 +22,7 @@ public class NGramQuestion implements Question {
 			if (!target[target.length - 1 - i]
 					.trim()
 					.toLowerCase()
-					.equals(entry.getHistory().get(histLen - 1 - i).trim()
+					.equals(entry.getHistory()[histLen - 1 - i].trim()
 							.toLowerCase())) {
 				return false;
 			}

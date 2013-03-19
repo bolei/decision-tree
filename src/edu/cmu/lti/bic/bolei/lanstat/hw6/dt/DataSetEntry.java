@@ -1,41 +1,48 @@
 package edu.cmu.lti.bic.bolei.lanstat.hw6.dt;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-
-import edu.cmu.lti.bic.bolei.lanstat.hw6.DtUtil;
+import java.util.ArrayList;
 
 public class DataSetEntry {
-	private List<String> history = new LinkedList<String>();
-	private String token;
+	private int historyBeginPos = 0; // begin position of history, inclusive
+	private int historyEndPos = 0; // end position of history, exclusive
+	private ArrayList<String> trainingData;
 	private boolean[] answers;
 
-	private DataSetEntry() {
+	public DataSetEntry(int histBegin, int histEnd,
+			ArrayList<String> trainingData) {
+		this.historyBeginPos = histBegin;
+		this.historyEndPos = histEnd;
+		this.trainingData = trainingData;
 	}
 
-	public List<String> getHistory() {
-		return history;
+	public String[] getHistory() {
+		return trainingData.subList(historyBeginPos, historyEndPos).toArray(
+				new String[] {});
 	}
 
 	public String getToken() {
-		return token;
+		return trainingData.get(historyEndPos);
 	}
 
-	public static DataSetEntry parseFileLine(String line) {
-		DataSetEntry entry = new DataSetEntry();
-		String[] items = line.split("\\s+");
-		Collections.addAll(entry.history, items[0].split("#"));
-		entry.token = items[1];
-		return entry;
+	public int getHistoryLength() {
+		return historyEndPos - historyBeginPos;
 	}
 
-	public static DataSetEntry getInstance(List<String> history, String token) {
-		DataSetEntry entry = new DataSetEntry();
-		entry.history = history;
-		entry.token = token;
-		return entry;
-	}
+	// public static DataSetEntry parseFileLine(String line) {
+	// DataSetEntry entry = new DataSetEntry();
+	// String[] items = line.split("\\s+");
+	// Collections.addAll(entry.history, items[0].split("#"));
+	// entry.token = items[1];
+	// return entry;
+	// }
+	//
+	// public static DataSetEntry getInstance(List<String> history, String
+	// token) {
+	// DataSetEntry entry = new DataSetEntry();
+	// entry.history = history;
+	// entry.token = token;
+	// return entry;
+	// }
 
 	public void initAnswers(boolean[] answers) {
 		this.answers = answers;
@@ -64,22 +71,14 @@ public class DataSetEntry {
 
 	@Override
 	public String toString() {
-		return getHistoryString() + "\t" + token;
+		return getHistoryString() + "\t" + getToken();
 	}
 
 	private String getHistoryString() {
 		StringBuilder sb = new StringBuilder();
-		for (String h : history) {
-			sb.append(h + "#");
+		for (int i = historyBeginPos; i < historyEndPos; i++) {
+			sb.append(trainingData.get(i) + "#");
 		}
 		return sb.toString();
 	}
-
-	public DataSetEntry getCopy() {
-		DataSetEntry entry = new DataSetEntry();
-		entry.history = DtUtil.copyStringList(history);
-		entry.token = new String(token);
-		return entry;
-	}
-
 }

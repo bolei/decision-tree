@@ -21,10 +21,12 @@ public class DecisionTree {
 		int historySize = Integer.parseInt(DtUtil.getConfiguration()
 				.getProperty("historySize"));
 
-		DataSetEntryIterator it = new DataSetEntryIterator(corpusFilePath,
-				historySize);
-		while (it.hasNext()) {
-			memDataSet.add(it.next());
+		List<String> trainingData = DtUtil.getCorpusData(corpusFilePath);
+
+		DataSetEntryIterator dataSetIterator = new DataSetEntryIterator(
+				trainingData, historySize);
+		while (dataSetIterator.hasNext()) {
+			memDataSet.add(dataSetIterator.next());
 		}
 		root = new DecisionTreeNode(memDataSet, new int[] {}, new boolean[] {});
 		root.createLanguageModel();
