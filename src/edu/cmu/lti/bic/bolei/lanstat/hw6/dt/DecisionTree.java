@@ -29,9 +29,13 @@ public class DecisionTree {
 		while (dataSetIterator.hasNext()) {
 			memDataSet.add(dataSetIterator.next());
 		}
+		acceptQuestions(questions);
 		root = new DecisionTreeNode(memDataSet, new int[] {}, new boolean[] {});
 		root.createLanguageModel();
-		acceptQuestions(questions);
+	}
+
+	public DecisionTreeNode getRoot() {
+		return root;
 	}
 
 	public void growDT(int maxLevel) {

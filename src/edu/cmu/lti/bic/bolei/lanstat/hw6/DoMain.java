@@ -16,14 +16,10 @@ public class DoMain {
 		System.out.println("start: " + new Date());
 		Properties prop = DtUtil.getConfiguration();
 		int level = Integer.parseInt(prop.getProperty("level"));
-		// DecisionTreeNode root = DecisionTreeNode.initializeTree();
 		LinkedList<NGramQuestion> questions = new LinkedList<NGramQuestion>(
 				DtUtil.generateNGramQuestions(1));
-		questions.addAll(DtUtil.generateNGramQuestions(2));
 		DecisionTree tree = new DecisionTree(questions);
 		tree.growDT(level);
-
-		// System.out.println(root.toString());
 
 		String corpusFilePath = prop.getProperty("corpusFilePath");
 		int historySize = Integer.parseInt(DtUtil.getConfiguration()

@@ -1,6 +1,7 @@
 package edu.cmu.lti.bic.bolei.lanstat.hw6.dt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class DataSetEntry {
 	private int historyBeginPos = 0; // begin position of history, inclusive
@@ -46,9 +47,6 @@ public class DataSetEntry {
 			return true;
 		}
 		for (int i = 0; i < questionIds.length; i++) {
-			if (questionIds[i] > this.answers.length) {
-				System.err.println("array size error");
-			}
 			if (this.answers[questionIds[i]] != answers[i]) {
 				return false;
 			}
@@ -58,7 +56,8 @@ public class DataSetEntry {
 
 	@Override
 	public String toString() {
-		return getHistoryString() + "\t" + getToken();
+		return getHistoryString() + "\t" + getToken() + "\t"
+				+ Arrays.toString(answers);
 	}
 
 	private String getHistoryString() {
