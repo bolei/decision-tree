@@ -2,6 +2,7 @@ package edu.cmu.lti.bic.bolei.lanstat.hw6.dt;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,14 +10,14 @@ import java.util.Properties;
 
 import edu.cmu.lti.bic.bolei.lanstat.hw6.DtUtil;
 import edu.cmu.lti.bic.bolei.lanstat.hw6.question.Question;
+import edu.cmu.lti.bic.bolei.lanstat.hw6.question.QuestionScore;
 
 public class DecisionTree {
 	private DecisionTreeNode root;
 	private LinkedList<DataSetEntry> memDataSet = new LinkedList<DataSetEntry>();
 	private List<? extends Question> questions = new LinkedList<Question>();
 
-	public DecisionTree(LinkedList<? extends Question> questions)
-			throws IOException {
+	public DecisionTree(LinkedList<Question> questions) throws IOException {
 		Properties prop = DtUtil.getConfiguration();
 		String corpusFilePath = prop.getProperty("corpusFilePath");
 		int historySize = Integer.parseInt(DtUtil.getConfiguration()
@@ -76,18 +77,18 @@ public class DecisionTree {
 	private void acceptQuestions(List<? extends Question> questions) {
 		int questionSize = questions.size();
 		this.questions = questions;
-		long count = 0;
-		long temp = 0, window = 100000;
+		// long count = 0;
+		// long temp = 0, window = 100000;
 		for (DataSetEntry entry : memDataSet) {
-			if (count / window != temp) {
-				System.out.println(count / window);
-				temp = count / window;
-			}
+			// if (count / window != temp) {
+			// System.out.println(count / window);
+			// temp = count / window;
+			// }
 			entry.initAnswers(new boolean[questionSize]);
 			Iterator<? extends Question> it = questions.iterator();
 			int questionIndex = 0;
 			while (it.hasNext()) {
-				count++;
+				// count++;
 				entry.setAnswer(questionIndex, it.next().giveAnswer(entry));
 				questionIndex++;
 			}
@@ -122,6 +123,7 @@ public class DecisionTree {
 				// asked question, move to next question
 				continue;
 			}
+			System.out.println(i);
 			tempScore = node.getMutalInformationForQuestion(i);
 			if (tempScore > bestScore) {
 				bestScore = tempScore;
@@ -134,6 +136,18 @@ public class DecisionTree {
 		}
 		growDTNode(node.getYesChild(), levelCount + 1, maxLevel);
 		growDTNode(node.getNoChild(), levelCount + 1, maxLevel);
+	}
+
+	public List<QuestionScore> rankQuestions() {
+		System.out.println("question size=" + questions.size());
+		List<QuestionScore> result = new LinkedList<QuestionScore>();
+		for (int i = 0; i < questions.size(); i++) {
+			System.out.println(i);
+			double score = root.getMutalInformationForQuestion(i);
+			result.add(new QuestionScore(questions.get(i), score));
+		}
+		Collections.sort(result, Collections.<QuestionScore> reverseOrder());
+		return result;
 	}
 
 }
