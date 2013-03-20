@@ -1,6 +1,7 @@
 package edu.cmu.lti.bic.bolei.lanstat.hw6.dt;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +22,7 @@ public class DecisionTree {
 		int historySize = Integer.parseInt(DtUtil.getConfiguration()
 				.getProperty("historySize"));
 
-		List<String> trainingData = DtUtil.getCorpusData(corpusFilePath);
+		ArrayList<String> trainingData = DtUtil.getCorpusData(corpusFilePath);
 
 		DataSetEntryIterator dataSetIterator = new DataSetEntryIterator(
 				trainingData, historySize);
@@ -72,11 +73,11 @@ public class DecisionTree {
 		int questionSize = questions.size();
 		this.questions = questions;
 		long count = 0;
-		int temp = 0;
+		long temp = 0, window = 100000;
 		for (DataSetEntry entry : memDataSet) {
-			if (count % 10000 == temp) {
-				System.out.println(temp);
-				temp++;
+			if (count / window != temp) {
+				System.out.println(count / window);
+				temp = count / window;
 			}
 			entry.initAnswers(new boolean[questionSize]);
 			Iterator<? extends Question> it = questions.iterator();

@@ -1,9 +1,9 @@
 package edu.cmu.lti.bic.bolei.lanstat.hw6;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Properties;
 
 import edu.cmu.lti.bic.bolei.lanstat.hw6.dt.DataSetEntryIterator;
@@ -19,7 +19,7 @@ public class DoMain {
 		// DecisionTreeNode root = DecisionTreeNode.initializeTree();
 		LinkedList<NGramQuestion> questions = new LinkedList<NGramQuestion>(
 				DtUtil.generateNGramQuestions(1));
-		// questions.addAll(DtUtil.generateNGramQuestions(2));
+		questions.addAll(DtUtil.generateNGramQuestions(2));
 		DecisionTree tree = new DecisionTree(questions);
 		tree.growDT(level);
 
@@ -28,7 +28,7 @@ public class DoMain {
 		String corpusFilePath = prop.getProperty("corpusFilePath");
 		int historySize = Integer.parseInt(DtUtil.getConfiguration()
 				.getProperty("historySize"));
-		List<String> corpusData = DtUtil.getCorpusData(corpusFilePath);
+		ArrayList<String> corpusData = DtUtil.getCorpusData(corpusFilePath);
 		DataSetEntryIterator it = new DataSetEntryIterator(corpusData,
 				historySize);
 		double aveLogLik = tree.calcAverageLogLikelihood(it);

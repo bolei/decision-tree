@@ -28,22 +28,6 @@ public class DataSetEntry {
 		return historyEndPos - historyBeginPos;
 	}
 
-	// public static DataSetEntry parseFileLine(String line) {
-	// DataSetEntry entry = new DataSetEntry();
-	// String[] items = line.split("\\s+");
-	// Collections.addAll(entry.history, items[0].split("#"));
-	// entry.token = items[1];
-	// return entry;
-	// }
-	//
-	// public static DataSetEntry getInstance(List<String> history, String
-	// token) {
-	// DataSetEntry entry = new DataSetEntry();
-	// entry.history = history;
-	// entry.token = token;
-	// return entry;
-	// }
-
 	public void initAnswers(boolean[] answers) {
 		this.answers = answers;
 	}
@@ -62,7 +46,10 @@ public class DataSetEntry {
 			return true;
 		}
 		for (int i = 0; i < questionIds.length; i++) {
-			if (answers[questionIds[i]] != answers[i]) {
+			if (questionIds[i] > this.answers.length) {
+				System.err.println("array size error");
+			}
+			if (this.answers[questionIds[i]] != answers[i]) {
 				return false;
 			}
 		}

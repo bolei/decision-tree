@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -40,7 +41,7 @@ public class DtUtil {
 		Set<NGramQuestion> questions = new HashSet<NGramQuestion>();
 		String corpusFilePath = getConfiguration()
 				.getProperty("corpusFilePath");
-		List<String> trainingData = getCorpusData(corpusFilePath);
+		ArrayList<String> trainingData = getCorpusData(corpusFilePath);
 		DataSetEntryIterator it = new DataSetEntryIterator(trainingData, n);
 		DataSetEntry entry;
 		while (it.hasNext()) {
@@ -75,7 +76,7 @@ public class DtUtil {
 		return false;
 	}
 
-	public static LinkedList<String> getCorpusData(String corpusFilePath)
+	public static ArrayList<String> getCorpusData(String corpusFilePath)
 			throws IOException {
 		LinkedList<String> trainingData = new LinkedList<String>();
 		BufferedReader brIn = new BufferedReader(new FileReader(corpusFilePath));
@@ -84,6 +85,6 @@ public class DtUtil {
 		while ((line = brIn.readLine()) != null) {
 			Collections.addAll(trainingData, line.split("\\s+"));
 		}
-		return trainingData;
+		return new ArrayList<String>(trainingData);
 	}
 }

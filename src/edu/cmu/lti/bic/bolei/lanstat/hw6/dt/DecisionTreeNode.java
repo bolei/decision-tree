@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 import edu.cmu.lti.bic.bolei.lanstat.hw6.DtUtil;
 
@@ -22,16 +21,16 @@ public class DecisionTreeNode {
 	 * (h, t) pairs
 	 */
 	private List<DataSetEntry> memDataSet;
-	private String id;
+//	private String id;
 	private DecisionTreeNode yesChild, noChild;
 
 	public DecisionTreeNode(List<DataSetEntry> dataset, int[] historyQids,
 			boolean[] historyAns) {
 		yesChild = null;
 		noChild = null;
-		id = UUID.randomUUID().toString();
+//		id = UUID.randomUUID().toString();
 		memDataSet = dataset;
-		id = UUID.randomUUID().toString();
+//		id = UUID.randomUUID().toString();
 		historyQuestionIds = historyQids;
 		historyQuestionAnswers = historyAns;
 		questionIndex = -1;
@@ -74,30 +73,30 @@ public class DecisionTreeNode {
 		return langModel.get(token);
 	}
 
-	/*
-	 * Preorder visit
-	 */
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("node id = " + id + "\n");
-		if (questionIndex != -1) {
-			sb.append("node question Id: " + questionIndex + "\n");
-		}
-		sb.append("lang model:" + "\n");
-		sb.append(getLanguageModelString());
-		sb.append("root entropy = " + getNodeEntropy() + "\n");
-		if (yesChild != null && noChild != null) {
-			sb.append("Mutual Information = " + getMutalInformation() + "\n");
-		}
-		if (yesChild != null) {
-			sb.append(yesChild.toString());
-		}
-		if (noChild != null) {
-			sb.append(noChild.toString());
-		}
-		return sb.toString();
-	}
+	// /*
+	// * Preorder visit
+	// */
+	// @Override
+	// public String toString() {
+	// StringBuilder sb = new StringBuilder();
+	// sb.append("node id = " + id + "\n");
+	// if (questionIndex != -1) {
+	// sb.append("node question Id: " + questionIndex + "\n");
+	// }
+	// sb.append("lang model:" + "\n");
+	// sb.append(getLanguageModelString());
+	// sb.append("root entropy = " + getNodeEntropy() + "\n");
+	// if (yesChild != null && noChild != null) {
+	// sb.append("Mutual Information = " + getMutalInformation() + "\n");
+	// }
+	// if (yesChild != null) {
+	// sb.append(yesChild.toString());
+	// }
+	// if (noChild != null) {
+	// sb.append(noChild.toString());
+	// }
+	// return sb.toString();
+	// }
 
 	void createLanguageModel() {
 		langModel = new HashMap<String, Double>();
@@ -178,13 +177,13 @@ public class DecisionTreeNode {
 		return size;
 	}
 
-	private String getLanguageModelString() {
-		StringBuilder sb = new StringBuilder();
-		for (Entry<String, Double> entry : langModel.entrySet()) {
-			sb.append(entry.getKey() + "\t" + entry.getValue() + "\n");
-		}
-		return sb.toString();
-	}
+//	private String getLanguageModelString() {
+//		StringBuilder sb = new StringBuilder();
+//		for (Entry<String, Double> entry : langModel.entrySet()) {
+//			sb.append(entry.getKey() + "\t" + entry.getValue() + "\n");
+//		}
+//		return sb.toString();
+//	}
 
 	private void addTokenToLanguageModel(String tok) {
 		if (langModel.containsKey(tok)) {

@@ -3,17 +3,16 @@ package edu.cmu.lti.bic.bolei.lanstat.hw6.dt;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 
 public class DataSetEntryIterator implements Iterator<DataSetEntry> {
 
 	private static int HISTORY_SIZE;
 
-	private List<String> trainingData = new LinkedList<String>();
+	private ArrayList<String> trainingData = new ArrayList<String>();
+
 	private int pointer;
 
-	public DataSetEntryIterator(List<String> data, int historySize)
+	public DataSetEntryIterator(ArrayList<String> data, int historySize)
 			throws IOException {
 		HISTORY_SIZE = historySize;
 		trainingData = data;
@@ -26,12 +25,10 @@ public class DataSetEntryIterator implements Iterator<DataSetEntry> {
 
 	@Override
 	public DataSetEntry next() {
-		System.out.println(pointer);
 		int histBegin = Math.max(pointer - HISTORY_SIZE, 0);
 		int histEnd = pointer;
 		pointer++;
-		return new DataSetEntry(histBegin, histEnd, new ArrayList<String>(
-				trainingData));
+		return new DataSetEntry(histBegin, histEnd, trainingData);
 	}
 
 	@Override
